@@ -88,8 +88,14 @@ public class BuildMojo extends BaseAciMojo {
   }
 
   private void validateParameters() throws MojoExecutionException {
+    BuildType buildType = detectBuildType();
+
     if (Strings.isNullOrEmpty(baseImage)) {
-      throw new MojoExecutionException("Must specify baseImage");
+      if (buildType != null) {
+        baseImage = buildType.getDefaultBaseImage();
+      } else {
+        throw new MojoExecutionException("Must specify baseImage");
+      }
     }
 
     if (Strings.isNullOrEmpty(imageName)) {
@@ -115,14 +121,23 @@ public class BuildMojo extends BaseAciMojo {
     String targetName = file.getName();
 
     boolean copyDependencies = false;
-    String artifactType = mainArtifact.getType();
-    if ("war".equals(artifactType)) {
+    BuildType buildType = detectBuildType();
+    if (buildType == null) {
+      throw new MojoExecutionException("Cannot automatically copy artifacts; build type unknown");
+    }
+
+    switch (buildType) {
+    case WAR:
       targetName = "root.war";
-    } else if ("jar".equals(artifactType)) {
+      break;
+
+    case JAR:
       targetName = "app.jar";
       copyDependencies = true;
-    } else {
-      getLog().warn("Unknown artifact type: " + artifactType);
+      break;
+
+    default:
+      throw new MojoExecutionException("Unknown build type: " + buildType);
     }
 
     String imagePath = "/app/" + targetName;
@@ -143,4 +158,5 @@ public class BuildMojo extends BaseAciMojo {
 
     builder.addFiles(containerFiles);
   }
+
 }
