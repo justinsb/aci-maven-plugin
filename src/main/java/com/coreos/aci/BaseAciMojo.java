@@ -2,16 +2,9 @@ package com.coreos.aci;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
-import java.util.zip.ZipFile;
-import java.util.zip.ZipInputStream;
-
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -27,11 +20,8 @@ import com.coreos.appc.ContainerBuilder;
 import com.coreos.appc.ContainerFile;
 import com.coreos.appc.GpgCommandAciSigner;
 import com.coreos.appc.S3AciRepository;
-import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
-import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
-import com.google.common.primitives.Chars;
 
 /**
  * Common functionality for ACI mojos
@@ -124,27 +114,29 @@ public abstract class BaseAciMojo extends BaseMojo {
         return "/run " + this.mainClass;
       }
 
-      String mainClass = null;
       File mainArtifactFile = getMainArtifactFile();
-      try (ZipFile zipFile = new ZipFile(mainArtifactFile)) {
-        ZipEntry manifestEntry = zipFile.getEntry("META-INF/MANIFEST.MF");
-        if (manifestEntry != null) {
-          try (InputStream is = zipFile.getInputStream(manifestEntry)) {
-            try (InputStreamReader isr = new InputStreamReader(is, Charsets.UTF_8)) {
-              for (String line : CharStreams.readLines(isr)) {
-                int colonIndex = line.indexOf(':');
-                if (colonIndex == -1)
-                  continue;
-                String key = line.substring(0, colonIndex);
-                if (key.equals("Main-Class")) {
-                  mainClass = line.substring(colonIndex + 1).trim();
-                }
-              }
-            }
-          }
-        }
+      JarAnalysis jarAnalysis = new JarAnalysis(mainArtifactFile);
+      String mainClass;
+      try {
+        mainClass = jarAnalysis.getManifestMainClass();
       } catch (IOException e) {
-        throw new MojoExecutionException("Error opening JAR: " + mainArtifactFile, e);
+        throw new MojoExecutionException("Error reading JAR: " + mainArtifactFile, e);
+      }
+
+      if (mainClass == null) {
+        try {
+          List<String> mainClasses = jarAnalysis.discoverMainClasses(getLog());
+          if (mainClasses.size() == 0) {
+            getLog().warn("No classes with a `public static void main(String[] args)` method found");
+          } else if (mainClasses.size() > 1) {
+            getLog().warn("Multiple classes found with `public static void main(String[] args)` methods");
+          } else {
+            mainClass = mainClasses.get(0);
+            getLog().info("Automatically chose main-class: " + mainClass);
+          }
+        } catch (IOException e) {
+          throw new MojoExecutionException("Error reading JAR: " + mainArtifactFile, e);
+        }
       }
 
       if (mainClass == null) {
