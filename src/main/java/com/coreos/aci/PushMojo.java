@@ -3,6 +3,8 @@ package com.coreos.aci;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.ResolutionScope;
 
 import com.google.common.base.Strings;
 
@@ -11,7 +13,7 @@ import java.io.File;
 /**
  * Used to build & push ACI images.
  */
-@Mojo(name = "push")
+@Mojo(name = "push", defaultPhase = LifecyclePhase.DEPLOY, requiresDependencyResolution = ResolutionScope.RUNTIME)
 public class PushMojo extends BaseAciMojo {
 
   @Override

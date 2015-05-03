@@ -2,13 +2,20 @@ package com.coreos.aci;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Parameter;
+
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.s3.AmazonS3Client;
@@ -20,8 +27,11 @@ import com.coreos.appc.ContainerBuilder;
 import com.coreos.appc.ContainerFile;
 import com.coreos.appc.GpgCommandAciSigner;
 import com.coreos.appc.S3AciRepository;
+import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
+import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
+import com.google.common.primitives.Chars;
 
 /**
  * Common functionality for ACI mojos
@@ -103,18 +113,46 @@ public abstract class BaseAciMojo extends BaseMojo {
     }
   }
 
-  protected String getDefaultCommand(String baseImage) {
+  protected String getDefaultCommand(String baseImage) throws MojoExecutionException {
+    BuildType buildType = detectBuildType();
+    if (BuildType.JAR == buildType) {
+      String mainClass = null;
+
+      File mainArtifactFile = getMainArtifactFile();
+      try (ZipFile zipFile = new ZipFile(mainArtifactFile)) {
+        ZipEntry manifestEntry = zipFile.getEntry("META-INF/MANIFEST.MF");
+        if (manifestEntry != null) {
+          try (InputStream is = zipFile.getInputStream(manifestEntry)) {
+            try (InputStreamReader isr = new InputStreamReader(is, Charsets.UTF_8)) {
+              for (String line : CharStreams.readLines(isr)) {
+                int colonIndex = line.indexOf(':');
+                if (colonIndex == -1)
+                  continue;
+                String key = line.substring(0, colonIndex);
+                if (key.equals("Main-Class")) {
+                  mainClass = line.substring(colonIndex + 1).trim();
+                }
+              }
+            }
+          }
+        }
+      } catch (IOException e) {
+        throw new MojoExecutionException("Error opening JAR: " + mainArtifactFile, e);
+      }
+
+      if (mainClass == null) {
+        throw new MojoExecutionException(
+            "Must specify main class, either in the jar manifest, or in the mainClass configuration property.");
+      }
+    }
+
     return "/run";
   }
 
   protected void copyDefaultArtifacts(ContainerBuilder builder) throws IOException, MojoExecutionException {
     List<ContainerFile> containerFiles = new ArrayList<>();
 
-    Artifact mainArtifact = getMainArtifact();
-    File file = mainArtifact.getFile();
-    if (file == null) {
-      throw new MojoExecutionException("No file found for primary artifact (" + mainArtifact + ")");
-    }
+    File file = getMainArtifactFile();
     String targetName = file.getName();
 
     boolean copyDependencies = false;
@@ -156,6 +194,15 @@ public abstract class BaseAciMojo extends BaseMojo {
     builder.addFiles(containerFiles);
   }
 
+  private File getMainArtifactFile() throws MojoExecutionException {
+    Artifact mainArtifact = getMainArtifact();
+    File file = mainArtifact.getFile();
+    if (file == null) {
+      throw new MojoExecutionException("No file found for primary artifact (" + mainArtifact + ")");
+    }
+    return file;
+  }
+
   protected String getAciVersion() {
     String aciVersion = mavenProject.getVersion();
     return aciVersion;
@@ -188,27 +235,6 @@ public abstract class BaseAciMojo extends BaseMojo {
     }
 
     return imageFile;
-    // if (pushImage) {
-    // if (builder instanceof DockerContainerBuilder) {
-    // pushImage(docker, imageName, getLog());
-    // } else if (builder instanceof AppcContainerBuilder) {
-    // AciRepository aciRepository = getAciRepository();
-    // AciImageInfo imageInfo = new AciImageInfo();
-    // imageInfo.name = imageName;
-    // imageInfo.version = imageVersion;
-    //
-    // byte[] signature = null;
-    // if (signImage) {
-    // AciSigner signer = new GpgCommandAciSigner();
-    // signature = signer.sign(imageFile);
-    // }
-    //
-    // aciRepository.push(imageInfo, imageFile, signature, getSlf4jLogger());
-    // } else {
-    // throw new IllegalStateException();
-    // }
-    // }
-
   }
 
   /**
