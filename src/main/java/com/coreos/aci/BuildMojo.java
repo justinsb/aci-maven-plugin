@@ -3,27 +3,13 @@ package com.coreos.aci;
 import com.coreos.appc.AppcContainerBuilder;
 import com.coreos.appc.ContainerBuilder;
 import com.coreos.appc.ContainerFile;
-import com.coreos.maven.MavenLogAdapter;
-import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.project.DefaultDependencyResolutionRequest;
-import org.apache.maven.project.DependencyResolutionException;
-import org.apache.maven.project.DependencyResolutionResult;
-import org.apache.maven.project.MavenProject;
-import org.apache.maven.project.ProjectDependenciesResolver;
-import org.eclipse.aether.RepositorySystemSession;
-import org.eclipse.aether.graph.Dependency;
-import org.eclipse.aether.graph.DependencyNode;
-import org.slf4j.Logger;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -43,15 +29,6 @@ public class BuildMojo extends BaseAciMojo {
   /** The cmd command for the image. */
   @Parameter(property = "cmd")
   private String cmd;
-
-  @Parameter(defaultValue = "${project}")
-  private MavenProject mavenProject;
-
-  @Parameter(readonly = true, defaultValue = "${repositorySystemSession}")
-  private RepositorySystemSession repositorySystemSession;
-
-  @Component
-  private ProjectDependenciesResolver projectDependenciesResolver;
 
   @Override
   public void execute() throws MojoExecutionException {
@@ -103,48 +80,6 @@ public class BuildMojo extends BaseAciMojo {
     // throw new IllegalStateException();
     // }
     // }
-  }
-
-  private Logger getSlf4jLogger() {
-    return new MavenLogAdapter(getLog(), getLog().isDebugEnabled());
-  }
-
-  public List<Artifact> getDependencyArtifacts() throws MojoExecutionException {
-    DefaultDependencyResolutionRequest request = new DefaultDependencyResolutionRequest(mavenProject,
-        repositorySystemSession);
-    DependencyResolutionResult result;
-
-    try {
-      result = projectDependenciesResolver.resolve(request);
-    } catch (DependencyResolutionException ex) {
-      throw new MojoExecutionException(ex.getMessage(), ex);
-    }
-
-    List<Artifact> artifacts = new ArrayList<>();
-    List<DependencyNode> dependencyNodes = new ArrayList<>();
-    if (result.getDependencyGraph() != null) {
-      for (DependencyNode dependencyNode : result.getDependencyGraph().getChildren()) {
-        String scope = null;
-        Dependency dependency = dependencyNode.getDependency();
-        if (dependency != null) {
-          scope = dependency.getScope();
-        }
-        if (scope != null) {
-          if (scope.equals("test")) {
-            getLog().debug("Skipping test dependency: " + dependencyNode);
-            continue;
-          }
-        }
-        dependencyNodes.add(dependencyNode);
-      }
-    } else {
-      getLog().warn("Could not resolve dependencies (dependency-graph null)");
-    }
-    if (!dependencyNodes.isEmpty()) {
-      List<String> trail = Collections.singletonList(mavenProject.getArtifact().getId());
-      RepositoryUtils.toArtifacts(artifacts, dependencyNodes, trail, null);
-    }
-    return artifacts;
   }
 
   private void copyArtifacts(ContainerBuilder builder) throws IOException, MojoExecutionException {
