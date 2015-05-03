@@ -51,6 +51,10 @@ public abstract class BaseAciMojo extends BaseMojo {
   @Parameter(property = "cmd")
   private String cmd;
 
+  /** The main class command for the JAR. Used if cmd is not specified. */
+  @Parameter(property = "mainClass")
+  private String mainClass;
+
   /**
    * The ACI repository to push to. Must be set for a push.
    */
@@ -116,8 +120,11 @@ public abstract class BaseAciMojo extends BaseMojo {
   protected String getDefaultCommand(String baseImage) throws MojoExecutionException {
     BuildType buildType = detectBuildType();
     if (BuildType.JAR == buildType) {
-      String mainClass = null;
+      if (!Strings.isNullOrEmpty(this.mainClass)) {
+        return "/run " + this.mainClass;
+      }
 
+      String mainClass = null;
       File mainArtifactFile = getMainArtifactFile();
       try (ZipFile zipFile = new ZipFile(mainArtifactFile)) {
         ZipEntry manifestEntry = zipFile.getEntry("META-INF/MANIFEST.MF");
@@ -144,6 +151,8 @@ public abstract class BaseAciMojo extends BaseMojo {
         throw new MojoExecutionException(
             "Must specify main class, either in the jar manifest, or in the mainClass configuration property.");
       }
+
+      return "/run"; // Will run JAR
     }
 
     return "/run";
