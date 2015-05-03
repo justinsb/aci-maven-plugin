@@ -8,6 +8,7 @@
 
   <name>ACI Maven Plugin</name>
 
+
   <dependencies>
     <dependency>
       <groupId>org.apache.maven</groupId>
@@ -22,5 +23,33 @@
       <version>3.4</version>
       <scope>provided</scope>
     </dependency>
+
+    <dependency>
+      <groupId>com.coreos</groupId>
+      <artifactId>appc</artifactId>
+      <version>0.1.0-SNAPSHOT</version>
+    </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-plugin-plugin</artifactId>
+        <version>3.4</version>
+        <configuration>
+          <goalPrefix>aci</goalPrefix>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.3</version>
+        <configuration>
+          <source>1.7</source>
+          <target>1.7</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>
