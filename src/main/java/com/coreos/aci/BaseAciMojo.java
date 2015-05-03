@@ -109,11 +109,16 @@ public abstract class BaseAciMojo extends AbstractMojo {
     return new MavenLogAdapter(getLog(), getLog().isDebugEnabled());
   }
 
-  protected BuildType detectBuildType() throws MojoExecutionException {
+  protected Artifact getMainArtifact() throws MojoExecutionException {
     Artifact mainArtifact = mavenProject.getArtifact();
     if (mainArtifact == null) {
       throw new MojoExecutionException("Could not find primary artifact");
     }
+    return mainArtifact;
+  }
+
+  protected BuildType detectBuildType() throws MojoExecutionException {
+    Artifact mainArtifact = getMainArtifact();
     String artifactType = mainArtifact.getType();
     if ("war".equals(artifactType)) {
       return BuildType.WAR;

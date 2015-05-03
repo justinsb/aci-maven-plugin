@@ -99,7 +99,9 @@ public class BuildMojo extends BaseAciMojo {
     }
 
     if (Strings.isNullOrEmpty(imageName)) {
-      throw new MojoExecutionException("Must specify imageName");
+      Artifact mainArtifact = getMainArtifact();
+      imageName = mainArtifact.getGroupId() + "/" + mainArtifact.getArtifactId();
+      // throw new MojoExecutionException("Must specify imageName");
     }
 
     if (Strings.isNullOrEmpty(cmd)) {
@@ -110,10 +112,7 @@ public class BuildMojo extends BaseAciMojo {
   private void copyArtifacts(ContainerBuilder builder) throws IOException, MojoExecutionException {
     List<ContainerFile> containerFiles = new ArrayList<>();
 
-    Artifact mainArtifact = mavenProject.getArtifact();
-    if (mainArtifact == null) {
-      throw new MojoExecutionException("Could not find primary artifact");
-    }
+    Artifact mainArtifact = getMainArtifact();
     File file = mainArtifact.getFile();
     if (file == null) {
       throw new MojoExecutionException("No file found for primary artifact (" + mainArtifact + ")");
