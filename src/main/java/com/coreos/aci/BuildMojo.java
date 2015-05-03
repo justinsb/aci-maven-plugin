@@ -105,8 +105,16 @@ public class BuildMojo extends BaseAciMojo {
     }
 
     if (Strings.isNullOrEmpty(cmd)) {
-      throw new MojoExecutionException("Must specify cmd");
+      cmd = getDefaultCommand(baseImage);
+
+      if (Strings.isNullOrEmpty(cmd)) {
+        throw new MojoExecutionException("Must specify cmd");
+      }
     }
+  }
+
+  private String getDefaultCommand(String baseImage) {
+    return "/run";
   }
 
   private void copyArtifacts(ContainerBuilder builder) throws IOException, MojoExecutionException {
