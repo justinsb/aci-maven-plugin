@@ -3,10 +3,13 @@ package com.coreos.aci;
 import com.coreos.appc.AppcContainerBuilder;
 import com.coreos.appc.ContainerBuilder;
 import com.coreos.appc.ContainerFile;
+import com.google.common.base.Strings;
+
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -33,6 +36,8 @@ public class BuildMojo extends BaseAciMojo {
   @Override
   public void execute() throws MojoExecutionException {
     // final File workdir = new File(projectBuildDirectory, "aci");
+
+    validateParameters();
 
     File imageFile = new File(projectBuildDirectory, "image.aci");
     ContainerBuilder builder = new AppcContainerBuilder(imageFile);
@@ -80,6 +85,20 @@ public class BuildMojo extends BaseAciMojo {
     // throw new IllegalStateException();
     // }
     // }
+  }
+
+  private void validateParameters() throws MojoExecutionException {
+    if (Strings.isNullOrEmpty(baseImage)) {
+      throw new MojoExecutionException("Must specify baseImage");
+    }
+
+    if (Strings.isNullOrEmpty(imageName)) {
+      throw new MojoExecutionException("Must specify imageName");
+    }
+
+    if (Strings.isNullOrEmpty(cmd)) {
+      throw new MojoExecutionException("Must specify cmd");
+    }
   }
 
   private void copyArtifacts(ContainerBuilder builder) throws IOException, MojoExecutionException {
