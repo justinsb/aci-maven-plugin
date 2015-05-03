@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -21,6 +23,7 @@ import com.coreos.appc.ContainerFile;
 import com.coreos.appc.GpgCommandAciSigner;
 import com.coreos.appc.S3AciRepository;
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 
 /**
@@ -150,7 +153,7 @@ public abstract class BaseAciMojo extends BaseMojo {
     return "/run";
   }
 
-  protected void copyDefaultArtifacts(ContainerBuilder builder) throws IOException, MojoExecutionException {
+  protected void addDefaultArtifacts(ContainerBuilder builder) throws IOException, MojoExecutionException {
     List<ContainerFile> containerFiles = new ArrayList<>();
 
     File file = getMainArtifactFile();
@@ -178,7 +181,7 @@ public abstract class BaseAciMojo extends BaseMojo {
 
     String imagePath = "/app/" + targetName;
 
-    ContainerFile containerFile = new ContainerFile(file.toPath(), imagePath);
+    ContainerFile containerFile = new ContainerFile(file, imagePath);
     getLog().debug("Copying " + file + " to " + imagePath);
     containerFiles.add(containerFile);
 
@@ -187,7 +190,7 @@ public abstract class BaseAciMojo extends BaseMojo {
       for (Artifact runtimeDependency : runtimeDependencies) {
         file = runtimeDependency.getFile();
         imagePath = "/app/lib/" + file.getName();
-        containerFile = new ContainerFile(file.toPath(), imagePath);
+        containerFile = new ContainerFile(file, imagePath);
         containerFiles.add(containerFile);
       }
     }
@@ -210,7 +213,6 @@ public abstract class BaseAciMojo extends BaseMojo {
   }
 
   protected File buildAci() throws MojoExecutionException {
-
     File imageFile = new File(projectBuildDirectory, "image.aci");
     ContainerBuilder builder = new AppcContainerBuilder(imageFile);
     builder.log = getSlf4jLogger();
@@ -222,17 +224,38 @@ public abstract class BaseAciMojo extends BaseMojo {
     // builder.maintainer = maintainer;
 
     try {
-      copyDefaultArtifacts(builder);
+      addDefaultArtifacts(builder);
     } catch (IOException e) {
       throw new MojoExecutionException("Failed to copy artifacts", e);
     }
 
     // copyResources(builder);
 
+    String imageVersion = getAciVersion();
+
+    File manifestFile = new File(projectBuildDirectory, "image.aci.manifest");
     try {
-      builder.buildImage(imageName, getAciVersion());
-    } catch (Exception e) {
-      throw new MojoExecutionException("Failed to build image", e);
+      builder.writeManifest(manifestFile, imageName, imageVersion);
+    } catch (IOException e) {
+      throw new MojoExecutionException("Failed to build manifest", e);
+    }
+
+    List<File> dependencies = Lists.newArrayList();
+    for (ContainerFile containerFile : builder.getContainerFiles()) {
+      dependencies.add(containerFile.sourcePath);
+    }
+    dependencies.add(manifestFile);
+
+    if (isUpToDate(imageFile, dependencies)) {
+      getLog().info("ACI is up to date");
+    } else {
+      getLog().debug("Building image " + imageName);
+      try {
+        builder.buildImage(manifestFile);
+        getLog().info("Built ACI " + imageName + ":" + imageVersion);
+      } catch (Exception e) {
+        throw new MojoExecutionException("Failed to build image", e);
+      }
     }
 
     return imageFile;
@@ -242,16 +265,25 @@ public abstract class BaseAciMojo extends BaseMojo {
    * Signs an ACI built by buildAci
    */
   protected byte[] signAci(File imageFile) throws MojoExecutionException {
+    File signatureFile = new File(projectBuildDirectory, "image.aci.asc");
 
-    AciSigner signer = new GpgCommandAciSigner();
     byte[] signature;
+    if (isUpToDate(signatureFile, Arrays.asList(imageFile))) {
+      getLog().info("Signature is up to date");
+      try {
+        signature = Files.toByteArray(signatureFile);
+        return signature;
+      } catch (IOException e) {
+        getLog().warn("Ignoring error reading existing signature file", e);
+      }
+    }
+    AciSigner signer = new GpgCommandAciSigner();
     try {
       signature = signer.sign(imageFile);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new MojoExecutionException("Signing interrupted");
     }
-    File signatureFile = new File(projectBuildDirectory, "image.aci.asc");
     try {
       Files.write(signature, signatureFile);
     } catch (IOException e) {
@@ -259,6 +291,21 @@ public abstract class BaseAciMojo extends BaseMojo {
     }
 
     return signature;
+  }
+
+  private boolean isUpToDate(File target, Iterable<File> dependencies) {
+    if (!target.exists()) {
+      return false;
+    }
+
+    long targetDate = target.lastModified();
+    for (File dependency : dependencies) {
+      long dependencyDate = dependency.lastModified();
+      if (dependencyDate >= targetDate) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
