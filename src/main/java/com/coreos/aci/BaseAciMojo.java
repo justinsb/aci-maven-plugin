@@ -22,6 +22,8 @@ import com.coreos.appc.ContainerBuilder;
 import com.coreos.appc.ContainerFile;
 import com.coreos.appc.GpgCommandAciSigner;
 import com.coreos.appc.S3AciRepository;
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
@@ -97,7 +99,7 @@ public abstract class BaseAciMojo extends BaseMojo {
 
     if (Strings.isNullOrEmpty(imageName)) {
       Artifact mainArtifact = getMainArtifact();
-      imageName = mainArtifact.getGroupId() + "/" + mainArtifact.getArtifactId();
+      imageName = getReversedGroupId(mainArtifact) + "/" + mainArtifact.getArtifactId();
       // throw new MojoExecutionException("Must specify imageName");
     }
 
@@ -108,6 +110,12 @@ public abstract class BaseAciMojo extends BaseMojo {
         throw new MojoExecutionException("Must specify cmd");
       }
     }
+  }
+
+  protected String getReversedGroupId(Artifact artifact) {
+    String groupId = artifact.getGroupId();
+    List<String> tokens = Lists.newArrayList(Splitter.on(".").split(groupId));
+    return Joiner.on('.').join(Lists.reverse(tokens));
   }
 
   protected String getDefaultCommand(String baseImage) throws MojoExecutionException {

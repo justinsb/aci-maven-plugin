@@ -30,7 +30,7 @@ public class PushMojo extends BaseAciMojo {
 
     if (Strings.isNullOrEmpty(aciRepository)) {
       Artifact mainArtifact = getMainArtifact();
-      aciRepository = "s3://" + mainArtifact.getGroupId();
+      aciRepository = "s3://" + getReversedGroupId(mainArtifact);
       getLog().warn("Defaulting aci repository to " + aciRepository);
     }
   }
