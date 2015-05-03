@@ -302,9 +302,14 @@ public abstract class BaseAciMojo extends BaseMojo {
     }
 
     long targetDate = target.lastModified();
+
+    // Allow for FS timestamps that are not accurately stored
+    targetDate -= 30 * 1000;
+
     for (File dependency : dependencies) {
       long dependencyDate = dependency.lastModified();
       if (dependencyDate >= targetDate) {
+        getLog().debug("File is out of date: " + target + " due to " + dependency);
         return false;
       }
     }
