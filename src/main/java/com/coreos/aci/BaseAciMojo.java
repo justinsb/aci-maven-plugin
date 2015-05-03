@@ -126,20 +126,23 @@ public abstract class BaseAciMojo extends BaseMojo {
         throw new MojoExecutionException("Error reading JAR: " + mainArtifactFile, e);
       }
 
-      if (mainClass == null) {
-        try {
-          List<String> mainClasses = jarAnalysis.discoverMainClasses(getLog());
-          if (mainClasses.size() == 0) {
-            getLog().warn("No classes with a `public static void main(String[] args)` method found");
-          } else if (mainClasses.size() > 1) {
-            getLog().warn("Multiple classes found with `public static void main(String[] args)` methods");
-          } else {
-            mainClass = mainClasses.get(0);
-            getLog().info("Automatically chose main-class: " + mainClass);
-          }
-        } catch (IOException e) {
-          throw new MojoExecutionException("Error reading JAR: " + mainArtifactFile, e);
+      if (mainClass != null) {
+        // A runnable JAR
+        return "/run";
+      }
+
+      try {
+        List<String> mainClasses = jarAnalysis.discoverMainClasses(getLog());
+        if (mainClasses.size() == 0) {
+          getLog().warn("No classes with a `public static void main(String[] args)` method found");
+        } else if (mainClasses.size() > 1) {
+          getLog().warn("Multiple classes found with `public static void main(String[] args)` methods");
+        } else {
+          mainClass = mainClasses.get(0);
+          getLog().info("Automatically chose main-class: " + mainClass);
         }
+      } catch (IOException e) {
+        throw new MojoExecutionException("Error reading JAR: " + mainArtifactFile, e);
       }
 
       if (mainClass == null) {
@@ -147,7 +150,7 @@ public abstract class BaseAciMojo extends BaseMojo {
             "Must specify main class, either in the jar manifest, or in the mainClass configuration property.");
       }
 
-      return "/run"; // Will run JAR
+      return "/run " + mainClass;
     }
 
     return "/run";
