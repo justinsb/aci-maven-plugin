@@ -8,4 +8,5 @@ It was created with:
 mvn archetype:generate -DgroupId=com.justinsb.aci -DartifactId=example-console2 -DarchetypeArtifactId=maven-archetype-quickstart -DinteractiveMode=false
 ```
 
-Then Guava was added to the maven dependencies (see pom.xml), and Guava was used to print the message.
+Then Guava was added to the maven dependencies in [pom.xml](pom.xml), and Guava was used to print the message.  Commons math was also added, just to show that
+multiple JAR dependencies works!
