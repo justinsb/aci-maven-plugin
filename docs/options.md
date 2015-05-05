@@ -1,9 +1,9 @@
-## Maven options
+## Maven plugin options
 
 For many maven projects the default options will be correct, but you can customize the options by
 including the aci plugin in your pom.xml.
 
-Here is an example from (example-console2/pom.xml)[../examples/example-console2/pom.xml]:
+Here is an example from [example-console2/pom.xml](../examples/example-console2/pom.xml):
 
 ```
   <build>

@@ -10,3 +10,5 @@ mvn archetype:generate -DgroupId=com.justinsb.aci -DartifactId=example-console2 
 
 Then Guava was added to the maven dependencies in [pom.xml](pom.xml), and Guava was used to print the message.  Commons math was also added, just to show that
 multiple JAR dependencies works!
+
+This example also explicitly includes the aci plugin, although this is only needed if you want to change the default options.
