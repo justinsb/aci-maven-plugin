@@ -1,0 +1,31 @@
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                              http://maven.apache.org/xsd/settings-1.0.0.xsd">
+  <pluginGroups>
+    <pluginGroup>com.coreos</pluginGroup>
+  </pluginGroups>
+
+  <profiles>
+    <profile>
+      <id>standard-extra-repos</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>mvn.justinsb.com-release-repo</id>
+          <name>mvn.justinsb.com Release Repository</name>
+          <url>http://mvn.justinsb.com/release</url>
+        </pluginRepository>
+        <pluginRepository>
+          <id>mvn.justinsb.com-snapshot-repo</id>
+          <name>mvn.justinsb.com Snapshot Repository</name>
+          <url>http://mvn.justinsb.com/snapshot</url>
+        </pluginRepository>
+      </pluginRepositories>
+    </profile>
+  </profiles>
+</settings>
+
+
