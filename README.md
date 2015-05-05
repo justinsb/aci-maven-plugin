@@ -38,6 +38,8 @@ You can configure `com.coreos` as a well-known plugin prefix, so you can type `a
 </pluginGroups>
 ```
 
+There's an example in [docs/prefix-settings.xml](docs/prefix-settings.xml)
+
 ### Building, signing & pushing ACIs
 
 Then you can try one of the examples:
