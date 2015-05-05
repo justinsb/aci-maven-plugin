@@ -42,7 +42,7 @@ There's an example in [docs/prefix-settings.xml](docs/prefix-settings.xml)
 
 ### Building, signing & pushing ACIs
 
-Then you can try one of the examples:
+You can now try one of the examples:
 
 ```
 cd examples/example-console1/
@@ -90,5 +90,5 @@ There are 3 examples provided:
 ### Advanced settings
 
 For most apps, the plugin does not need any settings, so you can just use `mvn package aci:build`,
-`mvn package aci:sign` or `mvn package aci:push`.  But if you want non-default options, consult the
+`mvn package aci:sign` or `mvn package aci:push`.  But if you want non-default options, you should read the
 [mvn plugin options](docs/options.md).
