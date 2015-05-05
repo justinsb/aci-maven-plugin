@@ -6,14 +6,13 @@ This maven plugin makes it easy to produce ACIs (appc images) directly from your
 
 To build and run from source:
 
-1) First checkout and `mvn install` [appc-java](https://github.com/justinsb/appc-java)
-2) Checkout this repository and `mvn install`
+1. First check-out [appc-java](https://github.com/justinsb/appc-java) and `mvn install` 
+1. Check-out this repository and `mvn install`
 
-You can configure com.coreos as a well-known plugin prefix:
 
 ### Configuring mvn so we can use 'aci'
 
-Add this to `~/.m2/settings.xml`
+You can configure `com.coreos` as a well-known plugin prefix.  Add this to `~/.m2/settings.xml`
 
 ```
 <pluginGroups>
