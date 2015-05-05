@@ -2,6 +2,12 @@
 
 This maven plugin makes it easy to produce ACIs (appc images) directly from your maven projects.
 
+Key features:
+
+* Sensible defaults - you can probably just `mvn package aci:push`
+* Works with standalone-apps (JARs) and web-apps (WARs)
+
+
 ### Building the project
 
 To build and run from source:
@@ -20,7 +26,7 @@ You can configure `com.coreos` as a well-known plugin prefix.  Add this to `~/.m
 </pluginGroups>
 ```
 
-### Building examples
+### Building, signing & pushing ACIs
 
 Then you can try one of the examples:
 
@@ -58,12 +64,16 @@ mvn package aci:push
 sudo rkt run aci.justinsb.com/example-console1
 ```
 
+### The examples
+
 There are 3 examples provided:
 
 * [example-console1](examples/example-console1) is a trivial Java console app
 * [example-console2](examples/example-console2) is a similarly trivial app, but it demonstrates that multiple JARs "just work"
 * [example-webapp1](examples/example-webapp1) is a simple webapp, which is automatically run with Jetty
 
+
+### Advanced settings
 
 For most apps, the plugin does not need any settings, so you can just use `mvn package aci:build`,
 `mvn package aci:sign` or `mvn package aci:push`.  But if you want non-default options, consult the
