@@ -18,7 +18,7 @@ You can configure `com.coreos` as a well-known plugin prefix.  Add this to `~/.m
 <pluginGroups>
   <pluginGroup>com.coreos</pluginGroup>
 </pluginGroups>
-``
+```
 
 ### Building examples
 
