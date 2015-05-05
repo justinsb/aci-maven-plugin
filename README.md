@@ -15,10 +15,22 @@ To build and run from source:
 1. First check-out [appc-java](https://github.com/justinsb/appc-java) and `mvn install` 
 1. Check-out this repository and `mvn install`
 
+Here are the commands you probably want to run:
+
+```
+git clone git@github.com:justinsb/appc-java.git
+cd appc-java
+mvn install
+cd ..
+git clone git@github.com:justinsb/aci-maven-plugin.git
+cd aci-maven-plugin
+mvn install
+```
 
 ### Configuring mvn so we can use 'aci'
 
-You can configure `com.coreos` as a well-known plugin prefix.  Add this to `~/.m2/settings.xml`
+You can configure `com.coreos` as a well-known plugin prefix, so you can type `aci:push` instead of
+`com.coreos:aci-maven-plugin::push`.  Add this to `~/.m2/settings.xml`
 
 ```
 <pluginGroups>
