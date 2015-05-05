@@ -75,5 +75,39 @@
         </configuration>
       </plugin>
     </plugins>
+
+    <extensions>
+      <extension>
+        <groupId>org.springframework.build</groupId>
+        <artifactId>aws-maven</artifactId>
+        <version>5.0.0.RELEASE</version>
+      </extension>
+    </extensions>
   </build>
+
+  <repositories>
+    <repository>
+      <id>mvn.justinsb.com-release-repo</id>
+      <name>mvn.justinsb.com Release Repository</name>
+      <url>http://mvn.justinsb.com/release</url>
+    </repository>
+    <repository>
+      <id>mvn.justinsb.com-snapshot-repo</id>
+      <name>mvn.justinsb.com Snapshot Repository</name>
+      <url>http://mvn.justinsb.com/snapshot</url>
+    </repository>
+  </repositories>
+
+  <distributionManagement>
+    <repository>
+      <id>maven-s3-release-repo</id>
+      <name>S3 Release Repository</name>
+      <url>s3://mvn.justinsb.com/release</url>
+    </repository>
+    <snapshotRepository>
+      <id>maven-s3-snapshot-repo</id>
+      <name>S3 Snapshot Repository</name>
+      <url>s3://mvn.justinsb.com/snapshot</url>
+    </snapshotRepository>
+  </distributionManagement>
 </project>
